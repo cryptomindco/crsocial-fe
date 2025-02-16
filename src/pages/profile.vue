@@ -146,7 +146,7 @@
 <script>
 import LazyImage from 'src/components/images/LazyImage.vue'
 import FeedList from 'src/components/lists/FeedList.vue'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import { api } from 'boot/axios'
 export default {
   name: 'profilePage',
@@ -199,6 +199,9 @@ export default {
     },
   },
   methods: {
+    ...mapActions({
+      setGlobalUser: 'user/setGlobalUser',
+    }),
     fetchData() {
       this.postTab = 'mypost'
       this.$api
@@ -281,8 +284,17 @@ export default {
       let headers = {
         'Content-Type': 'multipart/form-data',
       }
-      const newProfile = await api.post('/user/update-avatar', formData, headers)
-      this.profile = newProfile
+      const res = await api.post('/user/update-avatar', formData, headers)
+      if (res instanceof Error) {
+        responseError(res)
+        return
+      }
+      this.profile = res
+      let newUser = {}
+      Object.assign(newUser, this.user)
+      newUser.avatar = res.avatar
+      this.setGlobalUser(newUser)
+      window.location.reload()
     },
     async postNewArticle() {
       const content = this.postContent
