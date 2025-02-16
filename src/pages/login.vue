@@ -10,7 +10,7 @@
                   <div>
                     <q-card-section class="q-pa-lg login-form">
                       <div class="d-flex justify-content-center">
-                        <q-avatar>
+                        <q-avatar @click="toHomepage" class="cursor-pointer">
                           <img src="../assets/social.png" />
                         </q-avatar>
                       </div>
@@ -132,6 +132,9 @@ export default {
         return
       }
       this.$router.push({ path: '/' })
+    },
+    toHomepage() {
+      this.$router.push({ path: `/home` })
     },
     validateRequiredField(name, value) {
       if (value && value.length > 0) {
