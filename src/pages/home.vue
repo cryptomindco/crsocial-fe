@@ -27,7 +27,7 @@
           </div>
           <q-btn unelevated rounded color="primary" class="btn-wide-padding" label="Post" @click="postNewArticle" />
         </div>
-        <div>
+        <div class="q-mt-md">
           <div v-if="previews.length > 0" class="quad-images" :data-number-of-images="previews.length">
             <div v-for="(preview, index) of previews" :key="index" class="quad-image">
               <div class="thumbnail">
