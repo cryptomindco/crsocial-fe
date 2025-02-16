@@ -346,6 +346,11 @@ export default {
         .then((res) => {
           this.profile = res
           this.dispNameEditing = false
+          let newUser = {}
+          Object.assign(newUser, this.user)
+          newUser.fullName = res.fullName
+          this.setGlobalUser(newUser)
+          window.location.reload()
         })
         .catch((err) => {
           responseError(err)
