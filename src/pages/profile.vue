@@ -1,69 +1,97 @@
 <template>
   <div class="q-pt-md q-px-lg">
-    <div class="border-solid-light-grey q-pa-sm b-radius-10">
-      <div class="d-flex ai-center">
-        <div class="relative-position">
-          <q-avatar size="100px">
-            <img v-if="this.profile.avatar == ''" src="../assets/user-icon.png" />
-            <img v-else :src="this.profile.avatar" />
-          </q-avatar>
-          <label class="add-button" tabindex="0" v-if="isLoginUser">
-            <input type="file" accept="image/*" @click="onFileClick" @change="onAvatarChange" />
-            <q-icon size="sm" color="primary" name="edit" class="absolute-bottom-right q-mb-xs q-mr-xs circle-btn" />
-          </label>
+    <div class="border-solid-light-grey d-flex justify-content-between q-pa-sm b-radius-10">
+      <div>
+        <div class="d-flex ai-center">
+          <div class="relative-position">
+            <q-avatar size="100px">
+              <img v-if="this.avatarFile == null && this.profile.avatar == ''" src="../assets/user-icon.png" />
+              <img v-if="this.avatarFile == null && this.profile.avatar != ''" :src="this.profile.avatar" />
+              <img v-if="this.avatarFile != null" :src="avatarPreview" />
+            </q-avatar>
+            <label class="add-button" tabindex="0" v-if="isLoginUser && profileEditting">
+              <input type="file" accept="image/*" @click="onFileClick" @change="onAvatarChange" />
+              <q-icon size="sm" color="primary" name="edit" class="absolute-bottom-right q-mb-xs q-mr-xs circle-btn" />
+            </label>
+          </div>
+          <div class="q-ml-sm">
+            <p class="text-size-16">@{{ this.profile.username }}</p>
+            <q-btn
+              v-if="!isLoginUser && isLoggingin"
+              @click="followUser"
+              class="q-ml-xs"
+              :color="followStatus ? 'accent' : 'primary'"
+              :icon="followStatus ? 'remove' : 'add'"
+              :label="followStatus ? 'Unfollow' : 'Follow'"
+            />
+          </div>
         </div>
-        <div class="q-ml-sm">
-          <p class="text-size-16">@{{ this.profile.username }}</p>
+        <div class="d-flex q-mt-md q-ml-sm">
+          <p class="fw-600">Display name:</p>
+          <q-input v-model="displayName" class="q-ml-sm" outlined v-if="isLoginUser && profileEditting">
+            <template v-slot:append>
+              <div class="q-pt-xs">
+                <q-icon
+                  name="close"
+                  v-if="displayName !== ''"
+                  color="grey-3"
+                  @click="displayName = ''"
+                  class="cursor-pointer"
+                />
+              </div>
+            </template>
+          </q-input>
+          <div class="d-flex q-ml-sm" v-if="!isLoginUser || !profileEditting">
+            <p>{{ this.profile.fullName }}</p>
+            <label v-if="isLoginUser && profileEditting" class="add-button q-ml-sm" tabindex="0">
+              <q-icon name="edit" size="xs" @click="editDisplayname" />
+            </label>
+          </div>
+        </div>
+        <div class="d-flex q-mt-sm q-ml-sm">
+          <p class="fw-600">Bio:</p>
+          <q-input
+            v-if="isLoginUser && profileEditting"
+            v-model="bio"
+            outlined
+            class="q-ml-sm shadow-none"
+            placeholder="Your Bio?"
+            style="min-width: 250px"
+          >
+            <template v-slot:append>
+              <div class="q-pt-xs">
+                <q-icon name="close" color="grey-3" v-if="bio !== ''" @click="bio = ''" class="cursor-pointer" />
+              </div>
+            </template>
+          </q-input>
+          <div class="d-flex q-ml-sm" v-if="!isLoginUser || !profileEditting">
+            <p>{{ this.profile.bio }}</p>
+            <label v-if="isLoginUser && profileEditting" class="add-button q-ml-sm" tabindex="0">
+              <q-icon name="edit" size="xs" @click="editBio" />
+            </label>
+          </div>
+        </div>
+        <div class="q-ml-md q-mt-sm d-flex">
+          <q-btn v-if="profileEditting" @click="updateProfileUser" color="primary" icon="check" label="Save" />
           <q-btn
-            v-if="!isLoginUser && isLoggingin"
-            @click="followUser"
-            class="q-ml-xs"
-            :color="followStatus ? 'accent' : 'primary'"
-            :icon="followStatus ? 'remove' : 'add'"
-            :label="followStatus ? 'Unfollow' : 'Follow'"
+            class="q-ml-sm"
+            v-if="profileEditting"
+            @click="cancelEditProfile"
+            color="accent"
+            icon="close"
+            label="Cancel"
           />
         </div>
       </div>
-      <div class="d-flex q-mt-md q-ml-sm">
-        <p class="fw-600">Display name:</p>
-        <q-input v-model="displayName" class="q-ml-sm" outlined v-if="isLoginUser && dispNameEditing">
-          <template v-slot:append>
-            <div class="q-pt-xs">
-              <q-icon name="check" color="green" @click="updateDispName" class="cursor-pointer" />
-              <q-icon name="close" color="red" @click="dispNameEditing = false" class="cursor-pointer" />
-            </div>
-          </template>
-        </q-input>
-        <div class="d-flex q-ml-sm" v-if="!isLoginUser || !dispNameEditing">
-          <p>{{ this.profile.fullName }}</p>
-          <label v-if="isLoginUser" class="add-button q-ml-sm" tabindex="0">
-            <q-icon name="edit" size="xs" @click="editDisplayname" />
-          </label>
-        </div>
-      </div>
-      <div class="d-flex q-mt-sm q-ml-sm">
-        <p class="fw-600">Bio:</p>
-        <q-input
-          v-if="isLoginUser && bioEditing"
-          v-model="bio"
-          outlined
-          class="q-ml-sm shadow-none"
-          placeholder="Your Bio?"
-          style="min-width: 250px"
-        >
-          <template v-slot:append>
-            <div class="q-pt-xs">
-              <q-icon name="check" color="green" @click="updateBio" class="cursor-pointer" />
-              <q-icon name="close" color="red" @click="bioEditing = false" class="cursor-pointer" />
-            </div>
-          </template>
-        </q-input>
-        <div class="d-flex q-ml-sm" v-if="!isLoginUser || !bioEditing">
-          <p>{{ this.profile.bio }}</p>
-          <label v-if="isLoginUser" class="add-button q-ml-sm" tabindex="0">
-            <q-icon name="edit" size="xs" @click="editBio" />
-          </label>
-        </div>
+      <div>
+        <q-btn
+          v-if="isLoginUser && !profileEditting"
+          @click="profileEditting = true"
+          class="text-black"
+          color="grey-8"
+          icon="edit"
+          label="Edit Profile"
+        />
       </div>
     </div>
     <div class="border-solid-light-grey d-flex q-pa-sm q-mt-md b-radius-10" v-if="isLoginUser">
@@ -166,6 +194,7 @@ export default {
       files: [],
       previews: [],
       profile: {},
+      profileEditting: false,
       dispNameEditing: false,
       bioEditing: false,
       displayName: '',
@@ -173,6 +202,8 @@ export default {
       followStatus: false,
       following: [],
       postContent: '',
+      avatarFile: null,
+      avatarPreview: '#',
     }
   },
   created() {
@@ -202,6 +233,12 @@ export default {
     ...mapActions({
       setGlobalUser: 'user/setGlobalUser',
     }),
+    cancelEditProfile() {
+      this.profileEditting = false
+      this.displayName = this.profile.fullName
+      this.bio = this.profile.bio
+      this.avatarFile = null
+    },
     fetchData() {
       this.postTab = 'mypost'
       this.$api
@@ -278,23 +315,8 @@ export default {
     async onAvatarChange(e) {
       const newFiles = this.getFiles(e)
       if (newFiles == null || newFiles.length < 1) return
-      const file = newFiles[0]
-      let formData = new FormData()
-      formData.append('file', file)
-      let headers = {
-        'Content-Type': 'multipart/form-data',
-      }
-      const res = await api.post('/user/update-avatar', formData, headers)
-      if (res instanceof Error) {
-        responseError(res)
-        return
-      }
-      this.profile = res
-      let newUser = {}
-      Object.assign(newUser, this.user)
-      newUser.avatar = res.avatar
-      this.setGlobalUser(newUser)
-      window.location.reload()
+      this.avatarFile = newFiles[0]
+      this.avatarPreview = window.URL.createObjectURL(this.avatarFile)
     },
     async postNewArticle() {
       const content = this.postContent
@@ -330,46 +352,52 @@ export default {
           responseError(err)
         })
     },
+    async updateProfileUser() {
+      if (this.avatarFile == null) {
+        this.$api
+          .post('/user/update-profile-info', { fullName: this.displayName, bio: this.bio })
+          .then((res) => {
+            this.profile = res
+            let newUser = {}
+            Object.assign(newUser, this.user)
+            newUser.fullName = res.fullName
+            newUser.bio = res.bio
+            this.avatarFile = null
+            this.setGlobalUser(newUser)
+            window.location.reload()
+          })
+          .catch((err) => {
+            responseError(err)
+          })
+        return
+      }
+      let formData = new FormData()
+      formData.append('file', this.avatarFile)
+      formData.set('fullName', this.displayName)
+      formData.set('bio', this.bio)
+      let headers = {
+        'Content-Type': 'multipart/form-data',
+      }
+      const res = await api.post('/user/update-full-profile', formData, headers)
+      if (res instanceof Error) {
+        responseError(res)
+        return
+      }
+      this.profile = res
+      let newUser = {}
+      Object.assign(newUser, this.user)
+      newUser.avatar = res.avatar
+      newUser.fullName = res.fullName
+      newUser.bio = res.bio
+      this.avatarFile = null
+      this.setGlobalUser(newUser)
+      window.location.reload()
+    },
     editBio() {
       this.bioEditing = true
     },
     editDisplayname() {
       this.dispNameEditing = true
-    },
-    updateDispName() {
-      if (!this.displayName || this.displayName == '' || this.displayName == this.profile.fullName) {
-        this.dispNameEditing = false
-        return
-      }
-      this.$api
-        .post('/user/update-display-name', { fullName: this.displayName })
-        .then((res) => {
-          this.profile = res
-          this.dispNameEditing = false
-          let newUser = {}
-          Object.assign(newUser, this.user)
-          newUser.fullName = res.fullName
-          this.setGlobalUser(newUser)
-          window.location.reload()
-        })
-        .catch((err) => {
-          responseError(err)
-        })
-    },
-    updateBio() {
-      if (!this.bio || this.bio == '' || this.bio == this.profile.bio) {
-        this.bioEditing = false
-        return
-      }
-      this.$api
-        .post('/user/update-bio', { bio: this.bio })
-        .then((res) => {
-          this.profile = res
-          this.bioEditing = false
-        })
-        .catch((err) => {
-          responseError(err)
-        })
     },
     followUser() {
       this.$api
